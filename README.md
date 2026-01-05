@@ -16,6 +16,6 @@ accelerated in hardware using an HLS-generated IP core integrated in an FPGA ove
 - PYNQ (Python)
 
 ## Team
-- Elena Sanchez Gonzalez – HLS IP development
-- Nombre Apellido – Vivado integration and PYNQ overlay
+- Elena Sanchez Gonzalez
+-Alejandra Manzano Carrillo
 
