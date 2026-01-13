@@ -7,7 +7,10 @@ int main() {
     axis_stream_t in_s, out_s;
 
     axis_pixel_t px;
-    px.data = 0x112233;  // R=0x11, G=0x22, B=0x33
+
+    // TDATA = 32 bits: [31:24]=padding, [23:16]=R, [15:8]=G, [7:0]=B
+    px.data = 0x00112233;  // padding=0x00, R=0x11, G=0x22, B=0x33
+
     px.keep = -1;
     px.strb = -1;
     px.user = 0;
@@ -25,7 +28,9 @@ int main() {
     }
 
     axis_pixel_t out = out_s.read();
-    ap_uint<24> expected = 0xEEDDCC; // (255-11, 255-22, 255-33)
+
+    // Esperado: padding=0x00, R=0xEE, G=0xDD, B=0xCC  -> 0x00EEDDCC
+    ap_uint<32> expected = 0x00EEDDCC;
 
     std::cout << "Out: 0x" << std::hex << (unsigned)out.data
               << " Expected: 0x" << (unsigned)expected << "\n";
