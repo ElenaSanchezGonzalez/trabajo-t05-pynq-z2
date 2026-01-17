@@ -3,22 +3,24 @@
 
 void color_invert(axis_stream_t& in_stream, axis_stream_t& out_stream);
 
-int main() {
-    axis_stream_t in_s, out_s;
-
+static axis_pixel_t make_px(ap_uint<32> data, ap_uint<1> last) {
     axis_pixel_t px;
-
-    // TDATA = 32 bits: [31:24]=padding, [23:16]=R, [15:8]=G, [7:0]=B
-    px.data = 0x00112233;  // padding=0x00, R=0x11, G=0x22, B=0x33
-
+    px.data = data;
     px.keep = -1;
     px.strb = -1;
     px.user = 0;
-    px.last = 1;
+    px.last = last;
     px.id   = 0;
     px.dest = 0;
+    return px;
+}
 
-    in_s.write(px);
+int main() {
+    axis_stream_t in_s, out_s;
+
+    // Enviamos 2 píxeles (frame de 2 palabras)
+    in_s.write(make_px(0x00112233, 0));  // last=0
+    in_s.write(make_px(0x00ABCDEF, 1));  // last=1 (fin de frame)
 
     color_invert(in_s, out_s);
 
@@ -27,13 +29,21 @@ int main() {
         return 1;
     }
 
-    axis_pixel_t out = out_s.read();
+    axis_pixel_t o1 = out_s.read();
+    axis_pixel_t o2 = out_s.read();
 
-    // Esperado: padding=0x00, R=0xEE, G=0xDD, B=0xCC  -> 0x00EEDDCC
-    ap_uint<32> expected = 0x00EEDDCC;
+    ap_uint<32> exp1 = 0x00EEDDCC; // inv de 0x00112233
+    // 0x00ABCDEF -> R=AB, G=CD, B=EF => inv = 54,32,10 -> 0x00543210
+    ap_uint<32> exp2 = 0x00543210;
 
-    std::cout << "Out: 0x" << std::hex << (unsigned)out.data
-              << " Expected: 0x" << (unsigned)expected << "\n";
+    std::cout << "Out1: 0x" << std::hex << (unsigned)o1.data
+              << " Expected: 0x" << (unsigned)exp1
+              << " last=" << (unsigned)o1.last << "\n";
 
-    return (out.data == expected) ? 0 : 1;
+    std::cout << "Out2: 0x" << std::hex << (unsigned)o2.data
+              << " Expected: 0x" << (unsigned)exp2
+              << " last=" << (unsigned)o2.last << "\n";
+
+    int ok = (o1.data == exp1) && (o2.data == exp2) && (o2.last == 1);
+    return ok ? 0 : 1;
 }
